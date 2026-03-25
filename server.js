@@ -1,7 +1,6 @@
 const { WebSocketServer } = require('ws');
 
 const wss = new WebSocketServer({port: 8080});
-
 const clients = new Set();
 
 wss.on('connection', (socket) => {
@@ -27,6 +26,29 @@ wss.on('connection', (socket) => {
             }
         }
     })
+
+    socket.on('message', (raw) => {
+        let msg;
+        try{
+            msg = JSON.parse(raw);
+        } catch {
+            return; // NEW: ignore malformed messages
+        }
+
+        switch (msg.type) {
+            case 'chat':
+                broadcast(msg);
+                break;
+            case 'typing': // NEW: only send to others, not the sender
+                broadcastToOthers(socket, msg);
+                break;
+            case 'join': // NEW: announce when someone joins
+                broadcast({type: 'join', name: msg.name});
+                break;
+            default:
+                break;
+        }
+    });
 
     socket.on('close',() => {
         clients.delete(socket);

@@ -50,6 +50,22 @@ wss.on('connection', (socket) => {
         }
     });
 
+    function broadcast(message) {
+        for(const client of clients) {
+            if(client.readyState === client.OPEN){
+                client.send(JSON.stringify(message));
+            }
+        }
+    }
+
+    function broadcastToOthers(sender, message){
+        for(const client of clients){
+            if(client !== sender && client.readyState === client.OPEN){
+                client.send(JSON.stringify(message));
+            }
+        }
+    }
+
     socket.on('close',() => {
         clients.delete(socket);
         console.log('Client left. Total:', clients.size);

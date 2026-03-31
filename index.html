@@ -114,7 +114,11 @@ function App() {
       });
       ws.addEventListener('message', (e) => {
         const msg = JSON.parse(e.data);
-        setMessages(prev => [...prev, msg]);
+        if(msg.type === 'chat'){
+          setMessages(prev => [...prev, msg]);
+        } else if (msg.type === 'join'){
+          setMessages(prev => [...prev, {type: 'join', name: msg.name}]);
+        }
       });
     }
     connect();

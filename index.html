@@ -103,7 +103,11 @@ function App() {
       const ws = new WebSocket(WS_URL);
       socketRef.current = ws;
 
-      ws.addEventListener('open', () => setConnected(true));
+      ws.addEventListener('open', () => {
+        setConnected(true);
+        ws.send(JSON.stringify({type: 'join', name}));
+      });
+
       ws.addEventListener('close', () => {
         setConnected(false);
         setTimeout(connect, 2000);

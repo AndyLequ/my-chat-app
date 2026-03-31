@@ -18,14 +18,7 @@ wss.on('connection', (socket) => {
         }
     }, 30000);
 
-    socket.on('message', (raw) => {
-        const message = JSON.parse(raw);
-        for(const client of clients) {
-            if(client.readyState === client.OPEN){
-                client.send(JSON.stringify(message));
-            }
-        }
-    })
+
 
     socket.on('message', (raw) => {
         let msg;

@@ -129,9 +129,10 @@ function App() {
     const trimmed = text.trim();
     if (!trimmed || !connected || !socketRef.current) return;
     socketRef.current.send(JSON.stringify({
+      type:'chat',
       name,
       text: trimmed,
-      timestamp: new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })
+      timestamp: new Date().toLocaleTimeString([], {hour: '2-digit', minute: '2-digit'})
     }));
     setText('');
   }, [text, name, connected]);

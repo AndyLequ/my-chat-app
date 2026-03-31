@@ -149,11 +149,20 @@ function App() {
           placeholder="Your name..."
           value={name}
           onChange={e => setName(e.target.value)}
-          onKeyDown={e => e.key === 'Enter' && name.trim() && setNameSet(true)}
+          onKeyDown={e => {
+            if (e.key === 'Enter' && name.trim()) {
+              setNameSet(true);
+              socketRef.current?.send(JSON.stringify({type:'join', name}));
+            }
+          }}
           autoFocus
         />
         <button
-          onClick={() => name.trim() && setNameSet(true)}
+          onClick={ ()=> {
+            if(!name.trim()) return;
+            setNameSet(true);
+            socketRef.current?.send(JSON.stringify({type: 'join', name}));
+          }}
           className="bg-violet-600 hover:bg-violet-500 active:scale-95 transition-all text-white rounded-xl px-4 py-3 text-sm font-medium"
         >
           Enter →

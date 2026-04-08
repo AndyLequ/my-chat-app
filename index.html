@@ -59,6 +59,18 @@ function Avatar({ name, size = 'sm' }) {
   );
 }
 
+function JoinNotice({name}){
+  return (
+    <div className="flex items-center gap-3 px-2">
+      <div className="flex-1 h-px bg-zinc-800"/>
+        <span className="text-xs text-zinc-500 shrink-0">  
+          {name} joined the chat
+          </span>
+        <div className="flex-1 h-px bg-zinc-800"/>
+    </div>
+  )
+}
+
 function Message({ msg, isSelf, showAvatar }) {
   return (
     <div className={`msg-enter flex gap-2.5 ${isSelf ? 'flex-row-reverse' : 'flex-row'} items-end`}>
@@ -103,14 +115,21 @@ function App() {
       const ws = new WebSocket(WS_URL);
       socketRef.current = ws;
 
-      ws.addEventListener('open', () => setConnected(true));
+      ws.addEventListener('open', () => {
+        setConnected(true);
+      });
+
       ws.addEventListener('close', () => {
         setConnected(false);
         setTimeout(connect, 2000);
       });
       ws.addEventListener('message', (e) => {
         const msg = JSON.parse(e.data);
-        setMessages(prev => [...prev, msg]);
+        if(msg.type === 'chat'){
+          setMessages(prev => [...prev, msg]);
+        } else if (msg.type === 'join'){
+          setMessages(prev => [...prev, {type: 'join', name: msg.name}]);
+        }
       });
     }
     connect();
@@ -125,9 +144,10 @@ function App() {
     const trimmed = text.trim();
     if (!trimmed || !connected || !socketRef.current) return;
     socketRef.current.send(JSON.stringify({
+      type:'chat',
       name,
       text: trimmed,
-      timestamp: new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })
+      timestamp: new Date().toLocaleTimeString([], {hour: '2-digit', minute: '2-digit'})
     }));
     setText('');
   }, [text, name, connected]);
@@ -144,11 +164,20 @@ function App() {
           placeholder="Your name..."
           value={name}
           onChange={e => setName(e.target.value)}
-          onKeyDown={e => e.key === 'Enter' && name.trim() && setNameSet(true)}
+          onKeyDown={e => {
+            if (e.key === 'Enter' && name.trim()) {
+              setNameSet(true);
+              socketRef.current?.send(JSON.stringify({type:'join', name}));
+            }
+          }}
           autoFocus
         />
         <button
-          onClick={() => name.trim() && setNameSet(true)}
+          onClick={ ()=> {
+            if(!name.trim()) return;
+            setNameSet(true);
+            socketRef.current?.send(JSON.stringify({type: 'join', name}));
+          }}
           className="bg-violet-600 hover:bg-violet-500 active:scale-95 transition-all text-white rounded-xl px-4 py-3 text-sm font-medium"
         >
           Enter →
@@ -188,6 +217,9 @@ function App() {
           </div>
         )}
         {messages.map((msg, i) => {
+          if(msg.type === 'join'){
+            return <JoinNotice key={i} name={msg.name} />
+          }
           const prev = messages[i - 1];
           const showAvatar = !prev || prev.name !== msg.name;
           return (

@@ -146,17 +146,21 @@ function App() {
       socketRef.current = ws;
 
       ws.addEventListener('open', () => {
-        setConnected(true);
+      // replacing 'setConnected' with 'dispatch' calls
+        dispatch({type: 'SET_CONNECTED', payload: true})
+        
       });
 
       ws.addEventListener('close', () => {
-        setConnected(false);
+        // replacing 'setConnected' with 'dispatch' calls for the 'SET_CONNECTED' state
+        dispatch({type:'SET_CONNECTED', payload: false})
         setTimeout(connect, 2000);
       });
       ws.addEventListener('message', (e) => {
         const msg = JSON.parse(e.data);
         if(msg.type === 'chat'){
-          setMessages(prev => [...prev, msg]);
+          // using ADD_MESSAGE in message listener and using dispatch calls
+          dispatch({type: 'ADD_MESSAGE', payload: e.target.value});
         } else if (msg.type === 'join'){
           setMessages(prev => [...prev, {type: 'join', name: msg.name}]);
         }

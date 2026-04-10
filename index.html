@@ -187,7 +187,8 @@ function App() {
           className="bg-zinc-800 text-zinc-100 border border-zinc-700 rounded-xl px-4 py-3 text-sm outline-none focus:border-violet-500 transition-colors placeholder:text-zinc-600"
           placeholder="Your name..."
           value={name}
-          onChange={e => setName(e.target.value)}
+          // changing 'setName' to dispatch call for 'SET_NAME'
+          onChange={e => dispatch({type: 'SET_NAME', payload: e.target.value})}
           onKeyDown={e => {
             if (e.key === 'Enter' && name.trim()) {
               setNameSet(true);
@@ -265,7 +266,8 @@ function App() {
             className="flex-1 bg-transparent text-zinc-100 text-sm outline-none placeholder:text-zinc-600"
             placeholder={`Message #general`}
             value={text}
-            onChange={e => setText(e.target.value)}
+            // changing 'setText' to dispatch call for 'SET_TEXT'
+            onChange={e => dispatch({ type: 'SET_TEXT', payload: e.target.value})}
             onKeyDown={e => e.key === 'Enter' && send()}
             disabled={!connected}
             autoFocus

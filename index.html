@@ -156,14 +156,22 @@ function reducer(state, action){
 }
 
 function App() {
-  //removing all 5 of the useState calls
+  
 
-  //replacing with single line calling the useReducer
-  const [state, dispatch] = useReducer(reducer, initialState);
-  const {messages, name, text, connnected, nameSet} = state;
- 
-  const socketRef = useRef(null);
-  const bottomRef = useRef(null);
+  //stripping App down to just layout, allowing ChatProvider to hold all the state, using useContext to handle the state.
+  const {name, connected, nameSet, messages, text, dispatch, socketRef, bottomRef} = React.useContext(ChatContext)
+
+  const send = useCallback(() => {
+    const trimmed = text.trim();
+    if(!trimmed || !connected || !socketRef.current) return;
+    socketRef.current.send(JSON.stringify({
+      type: 'chat',
+      name,
+      text: trimmed,
+      timestamp: new Date().toLocaleTimeString([], {hour: '2-digit', minute: '2-digit'})
+    }));
+    dispatch({type: 'CLEAR_TEXT'});
+  }, [text, name, connected]);
 
   useEffect(() => {
     function connect() {
@@ -188,18 +196,6 @@ function App() {
   useEffect(() => {
     bottomRef.current?.scrollIntoView({ behavior: 'smooth' });
   }, [messages]);
-
-  const send = useCallback(() => {
-    const trimmed = text.trim();
-    if (!trimmed || !connected || !socketRef.current) return;
-    socketRef.current.send(JSON.stringify({
-      type:'chat',
-      name,
-      text: trimmed,
-      timestamp: new Date().toLocaleTimeString([], {hour: '2-digit', minute: '2-digit'})
-    }));
-    setText('');
-  }, [text, name, connected]);
 
   if (!nameSet) {
     return (

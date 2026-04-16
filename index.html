@@ -43,6 +43,31 @@ const COLORS = [
   'bg-rose-500', 'bg-amber-500', 'bg-pink-500'
 ];
 
+const ChatContext = React.createContext();
+
+function ChatProvider({children}){
+  const [state, dispatch] = useReducer(reducer, initialState);
+  const {messages, name, text, connected, nameSet} = state;
+  const socketRef = useRef(null);
+  const bottomRef = useRef(null);
+
+
+  return (
+    <ChatContext.Provider value={{
+      messages,
+      name,
+      text,
+      connected,
+      nameSet,
+      socketRef,
+      bottomRef,
+      dispatch
+    }}>
+      {children}
+      </ChatContext.Provider>
+  );
+}
+
 function getColor(name) {
   let hash = 0;
   for (let c of name) hash = c.charCodeAt(0) + ((hash << 5) - hash);
@@ -71,7 +96,11 @@ function JoinNotice({name}){
   )
 }
 
-function Message({ msg, isSelf, showAvatar }) {
+function Message({ msg, showAvatar }) { // removed isSelf prop
+
+  const {name} = React.useContext(ChatContext); // grabbing 'name' directly instead of bringing it in as a prop
+  const isSelf = msg.name === name; // computing it locally
+
   return (
     <div className={`msg-enter flex gap-2.5 ${isSelf ? 'flex-row-reverse' : 'flex-row'} items-end`}>
       {showAvatar
@@ -131,14 +160,22 @@ function reducer(state, action){
 }
 
 function App() {
-  //removing all 5 of the useState calls
+  
 
-  //replacing with single line calling the useReducer
-  const [state, dispatch] = useReducer(reducer, initialState);
-  const {messages, name, text, connnected, nameSet} = state;
- 
-  const socketRef = useRef(null);
-  const bottomRef = useRef(null);
+  //stripping App down to just layout, allowing ChatProvider to hold all the state, using useContext to handle the state.
+  const {name, connected, nameSet, messages, text, dispatch, socketRef, bottomRef} = React.useContext(ChatContext)
+
+  const send = useCallback(() => {
+    const trimmed = text.trim();
+    if(!trimmed || !connected || !socketRef.current) return;
+    socketRef.current.send(JSON.stringify({
+      type: 'chat',
+      name,
+      text: trimmed,
+      timestamp: new Date().toLocaleTimeString([], {hour: '2-digit', minute: '2-digit'})
+    }));
+    dispatch({type: 'CLEAR_TEXT'});
+  }, [text, name, connected]);
 
   useEffect(() => {
     function connect() {
@@ -163,18 +200,6 @@ function App() {
   useEffect(() => {
     bottomRef.current?.scrollIntoView({ behavior: 'smooth' });
   }, [messages]);
-
-  const send = useCallback(() => {
-    const trimmed = text.trim();
-    if (!trimmed || !connected || !socketRef.current) return;
-    socketRef.current.send(JSON.stringify({
-      type:'chat',
-      name,
-      text: trimmed,
-      timestamp: new Date().toLocaleTimeString([], {hour: '2-digit', minute: '2-digit'})
-    }));
-    setText('');
-  }, [text, name, connected]);
 
   if (!nameSet) {
     return (

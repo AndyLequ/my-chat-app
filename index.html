@@ -51,6 +51,21 @@ function ChatProvider({children}){
   const socketRef = useRef(null);
   const bottomRef = useRef(null);
 
+
+  return (
+    <ChatContext.Provider value={{
+      messages,
+      name,
+      text,
+      connected,
+      nameSet,
+      socketRef,
+      bottomRef,
+      dispatch
+    }}>
+      {children}
+      </ChatContext.Provider>
+  );
 }
 
 function getColor(name) {

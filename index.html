@@ -43,6 +43,9 @@ const COLORS = [
   'bg-rose-500', 'bg-amber-500', 'bg-pink-500'
 ];
 
+const ChatContext = React.createContext();
+
+
 function getColor(name) {
   let hash = 0;
   for (let c of name) hash = c.charCodeAt(0) + ((hash << 5) - hash);

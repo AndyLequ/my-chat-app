@@ -96,7 +96,11 @@ function JoinNotice({name}){
   )
 }
 
-function Message({ msg, isSelf, showAvatar }) {
+function Message({ msg, showAvatar }) { // removed isSelf prop
+
+  const {name} = React.useContext(ChatContext); // grabbing 'name' directly instead of bringing it in as a prop
+  const isSelf = msg.name === name; // computing it locally
+
   return (
     <div className={`msg-enter flex gap-2.5 ${isSelf ? 'flex-row-reverse' : 'flex-row'} items-end`}>
       {showAvatar

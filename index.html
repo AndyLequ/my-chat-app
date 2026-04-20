@@ -183,7 +183,7 @@ function App() {
       const ws = new WebSocket(WS_URL);
       socketRef.current = ws;
 
-      ws.addEventListener('open', () => setConnected(true));
+      ws.addEventListener('open', () => dispatch({type: 'SET_CONNECTED', payload: true}));
       ws.addEventListener('close', () => {
         // replacing 'setConnected' with 'dispatch' calls for the 'SET_CONNECTED' state
         dispatch({type:'SET_CONNECTED', payload: false})
@@ -191,8 +191,10 @@ function App() {
       });
       ws.addEventListener('message', (e) => {
         const msg = JSON.parse(e.data);
-        setMessages(prev => [...prev, msg]);
-      });
+        if(msg.type === 'chat') {
+        dispatch({type: 'ADD_MESSAGE', payload: msg});
+        } else if (msg.type === 'join') {
+        dispatch({type: 'ADD_MESSAGE', payload: {type: 'join', name: msg.name}});
     }
     connect();
     return () => socketRef.current?.close();

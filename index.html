@@ -34,7 +34,7 @@
 <div id="root" class="w-full max-w-lg h-[90vh]"></div>
 
 <script type="text/babel">
-const { useState, useEffect, useRef, useCallback } = React;
+const { useState, useEffect, useRef, useCallback, useReducer } = React;
 
 const WS_URL = 'ws://localhost:8080';
 
@@ -43,6 +43,35 @@ const COLORS = [
   'bg-rose-500', 'bg-amber-500', 'bg-pink-500'
 ];
 
+// defining initial state, this is a set up for useReducer being implemeneted later.
+const initialState = {
+  messages: [],
+  name: '',
+  text: '',
+  connected: false,
+  nameSet: false,
+}
+
+//writing reducer here:
+function reducer(state, action){
+  switch(action.type){
+    case 'SET_NAME':
+      return {...state, name: action.payload};
+    case 'SET_TEXT':
+      return {...state, text: action.payload};
+    case 'SET_CONNECTED':
+      return { ...state, connected: action.payload };
+    case 'SET_NAME_CONFIRMED':
+      return { ...state, nameSet: true };
+    case 'ADD_MESSAGE':
+      return { ...state, messages: [...state.messages, action.payload] };
+    case 'CLEAR_TEXT':
+      return { ...state, text: '' };
+    default:
+      return state;
+  }
+}
+
 const ChatContext = React.createContext();
 
 function ChatProvider({children}){
@@ -50,7 +79,7 @@ function ChatProvider({children}){
   const {messages, name, text, connected, nameSet} = state;
   const socketRef = useRef(null);
   const bottomRef = useRef(null);
-
+  
 
   return (
     <ChatContext.Provider value={{
@@ -130,34 +159,6 @@ function StatusDot({ connected }) {
   );
 }
 
-// defining initial state, this is a set up for useReducer being implemeneted later.
-const initialState = {
-  messages: [],
-  name: '',
-  text: '',
-  connected: false,
-  nameSet: false,
-}
-
-//writing reducer here:
-function reducer(state, action){
-  switch(action.type){
-    case 'SET_NAME':
-      return {...state, name: action.payload};
-    case 'SET_TEXT':
-      return {...state, text: action.payload};
-    case 'SET_CONNECTED':
-      return { ...state, connected: action.payload };
-    case 'SET_NAME_CONFIRMED':
-      return { ...state, nameSet: true };
-    case 'ADD_MESSAGE':
-      return { ...state, messages: [...state.messages, action.payload] };
-    case 'CLEAR_TEXT':
-      return { ...state, text: '' };
-    default:
-      return state;
-  }
-}
 
 function App() {
   

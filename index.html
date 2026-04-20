@@ -376,19 +376,7 @@
                     dispatch({ type: "SET_TEXT", payload: e.target.value })
                   }
                   onKeyDown={(e) => {
-                    if (e.key === "Enter" && name.trim()) {
-                      dispatch({ type: "SET_NAME_CONFIRMED" });
-                      socketRef.current?.send(
-                        JSON.stringify({ type: "join", name }),
-                      );
-                    }
-                  }}
-                  onClick={() => {
-                    if (!name.trim()) return;
-                    dispatch({ type: "SET_NAME_CONFIRMED" });
-                    socketRef.current?.send(
-                      JSON.stringify({ type: "join", name }),
-                    );
+                    e.key === "Enter" && send();
                   }}
                   disabled={!connected}
                   autoFocus

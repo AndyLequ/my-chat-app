@@ -1,325 +1,372 @@
-<!DOCTYPE html>
+<!doctype html>
 <html lang="en">
-<head>
-  <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
-  <title>Chat</title>
-  <script src="https://cdn.tailwindcss.com"></script>
-  <link href="https://fonts.googleapis.com/css2?family=DM+Sans:wght@400;500;600&family=DM+Mono:wght@400;500&display=swap" rel="stylesheet"/>
-  <script src="https://cdnjs.cloudflare.com/ajax/libs/react/18.2.0/umd/react.production.min.js"></script>
-  <script src="https://cdnjs.cloudflare.com/ajax/libs/react-dom/18.2.0/umd/react-dom.production.min.js"></script>
-  <script src="https://cdnjs.cloudflare.com/ajax/libs/babel-standalone/7.23.2/babel.min.js"></script>
-  <style>
-    * { font-family: 'DM Sans', sans-serif; }
-    body { background: #0f0f10; }
-    .mono { font-family: 'DM Mono', monospace; }
-    .messages-scroll::-webkit-scrollbar { width: 4px; }
-    .messages-scroll::-webkit-scrollbar-track { background: transparent; }
-    .messages-scroll::-webkit-scrollbar-thumb { background: #2a2a2e; border-radius: 4px; }
-    @keyframes slide-up {
-      from { opacity: 0; transform: translateY(8px); }
-      to   { opacity: 1; transform: translateY(0); }
-    }
-    .msg-enter { animation: slide-up 0.18s ease; }
-    @keyframes pulse-dot {
-      0%, 100% { opacity: 1; } 50% { opacity: 0.3; }
-    }
-    .pulse { animation: pulse-dot 1.4s ease-in-out infinite; }
-    .pulse2 { animation: pulse-dot 1.4s ease-in-out 0.2s infinite; }
-    .pulse3 { animation: pulse-dot 1.4s ease-in-out 0.4s infinite; }
-  </style>
-</head>
-<body class="h-screen flex items-center justify-center p-4">
-
-<div id="root" class="w-full max-w-lg h-[90vh]"></div>
-
-<script type="text/babel">
-const { useState, useEffect, useRef, useCallback, useReducer } = React;
-
-const WS_URL = 'ws://localhost:8080';
-
-const COLORS = [
-  'bg-violet-500', 'bg-sky-500', 'bg-emerald-500',
-  'bg-rose-500', 'bg-amber-500', 'bg-pink-500'
-];
-
-// defining initial state, this is a set up for useReducer being implemeneted later.
-const initialState = {
-  messages: [],
-  name: '',
-  text: '',
-  connected: false,
-  nameSet: false,
-}
-
-//writing reducer here:
-function reducer(state, action){
-  switch(action.type){
-    case 'SET_NAME':
-      return {...state, name: action.payload};
-    case 'SET_TEXT':
-      return {...state, text: action.payload};
-    case 'SET_CONNECTED':
-      return { ...state, connected: action.payload };
-    case 'SET_NAME_CONFIRMED':
-      return { ...state, nameSet: true };
-    case 'ADD_MESSAGE':
-      return { ...state, messages: [...state.messages, action.payload] };
-    case 'CLEAR_TEXT':
-      return { ...state, text: '' };
-    default:
-      return state;
-  }
-}
-
-const ChatContext = React.createContext();
-
-function ChatProvider({children}){
-  const [state, dispatch] = useReducer(reducer, initialState);
-  const {messages, name, text, connected, nameSet} = state;
-  const socketRef = useRef(null);
-  const bottomRef = useRef(null);
-  
-
-  return (
-    <ChatContext.Provider value={{
-      messages,
-      name,
-      text,
-      connected,
-      nameSet,
-      socketRef,
-      bottomRef,
-      dispatch
-    }}>
-      {children}
-      </ChatContext.Provider>
-  );
-}
-
-function getColor(name) {
-  let hash = 0;
-  for (let c of name) hash = c.charCodeAt(0) + ((hash << 5) - hash);
-  return COLORS[Math.abs(hash) % COLORS.length];
-}
-
-function Avatar({ name, size = 'sm' }) {
-  const color = getColor(name);
-  const sz = size === 'sm' ? 'w-7 h-7 text-xs' : 'w-9 h-9 text-sm';
-  return (
-    <div className={`${color} ${sz} rounded-full flex items-center justify-center text-white font-600 shrink-0 select-none`}>
-      {name.charAt(0).toUpperCase()}
-    </div>
-  );
-}
-
-function JoinNotice({name}){
-  return (
-    <div className="flex items-center gap-3 px-2">
-      <div className="flex-1 h-px bg-zinc-800"/>
-        <span className="text-xs text-zinc-500 shrink-0">  
-          {name} joined the chat
-          </span>
-        <div className="flex-1 h-px bg-zinc-800"/>
-    </div>
-  )
-}
-
-function Message({ msg, showAvatar }) { // removed isSelf prop
-
-  const {name} = React.useContext(ChatContext); // grabbing 'name' directly instead of bringing it in as a prop
-  const isSelf = msg.name === name; // computing it locally
-
-  return (
-    <div className={`msg-enter flex gap-2.5 ${isSelf ? 'flex-row-reverse' : 'flex-row'} items-end`}>
-      {showAvatar
-        ? <Avatar name={msg.name} />
-        : <div className="w-7 shrink-0" />
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Chat</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link
+      href="https://fonts.googleapis.com/css2?family=DM+Sans:wght@400;500;600&family=DM+Mono:wght@400;500&display=swap"
+      rel="stylesheet"
+    />
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/react/18.2.0/umd/react.production.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/react-dom/18.2.0/umd/react-dom.production.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/babel-standalone/7.23.2/babel.min.js"></script>
+    <style>
+      * {
+        font-family: "DM Sans", sans-serif;
       }
-      <div className={`flex flex-col gap-0.5 max-w-[72%] ${isSelf ? 'items-end' : 'items-start'}`}>
-        {showAvatar && !isSelf && (
-          <span className="text-xs text-zinc-500 px-1">{msg.name}</span>
-        )}
-        <div className={`px-3.5 py-2.5 rounded-2xl text-sm leading-relaxed ${
-          isSelf
-            ? 'bg-violet-600 text-white rounded-br-sm'
-            : 'bg-zinc-800 text-zinc-100 rounded-bl-sm'
-        }`}>
-          {msg.text}
-        </div>
-        <span className="mono text-[10px] text-zinc-600 px-1">{msg.timestamp}</span>
-      </div>
-    </div>
-  );
-}
+      body {
+        background: #0f0f10;
+      }
+      .mono {
+        font-family: "DM Mono", monospace;
+      }
+      .messages-scroll::-webkit-scrollbar {
+        width: 4px;
+      }
+      .messages-scroll::-webkit-scrollbar-track {
+        background: transparent;
+      }
+      .messages-scroll::-webkit-scrollbar-thumb {
+        background: #2a2a2e;
+        border-radius: 4px;
+      }
+      @keyframes slide-up {
+        from {
+          opacity: 0;
+          transform: translateY(8px);
+        }
+        to {
+          opacity: 1;
+          transform: translateY(0);
+        }
+      }
+      .msg-enter {
+        animation: slide-up 0.18s ease;
+      }
+      @keyframes pulse-dot {
+        0%,
+        100% {
+          opacity: 1;
+        }
+        50% {
+          opacity: 0.3;
+        }
+      }
+      .pulse {
+        animation: pulse-dot 1.4s ease-in-out infinite;
+      }
+      .pulse2 {
+        animation: pulse-dot 1.4s ease-in-out 0.2s infinite;
+      }
+      .pulse3 {
+        animation: pulse-dot 1.4s ease-in-out 0.4s infinite;
+      }
+    </style>
+  </head>
+  <body class="h-screen flex items-center justify-center p-4">
+    <div id="root" class="w-full max-w-lg h-[90vh]"></div>
 
-function StatusDot({ connected }) {
-  return (
-    <span className={`inline-block w-2 h-2 rounded-full mr-2 ${connected ? 'bg-emerald-400' : 'bg-zinc-600'}`} />
-  );
-}
+    <script type="text/babel">
+      const { useState, useEffect, useRef, useCallback, useReducer } = React;
+
+      const WS_URL = 'ws://localhost:8080';
+
+      const COLORS = [
+        'bg-violet-500', 'bg-sky-500', 'bg-emerald-500',
+        'bg-rose-500', 'bg-amber-500', 'bg-pink-500'
+      ];
+
+      // defining initial state, this is a set up for useReducer being implemeneted later.
+      const initialState = {
+        messages: [],
+        name: '',
+        text: '',
+        connected: false,
+        nameSet: false,
+      }
+
+      //writing reducer here:
+      function reducer(state, action){
+        switch(action.type){
+          case 'SET_NAME':
+            return {...state, name: action.payload};
+          case 'SET_TEXT':
+            return {...state, text: action.payload};
+          case 'SET_CONNECTED':
+            return { ...state, connected: action.payload };
+          case 'SET_NAME_CONFIRMED':
+            return { ...state, nameSet: true };
+          case 'ADD_MESSAGE':
+            return { ...state, messages: [...state.messages, action.payload] };
+          case 'CLEAR_TEXT':
+            return { ...state, text: '' };
+          default:
+            return state;
+        }
+      }
+
+      const ChatContext = React.createContext();
+
+      function ChatProvider({children}){
+        const [state, dispatch] = useReducer(reducer, initialState);
+        const {messages, name, text, connected, nameSet} = state;
+        const socketRef = useRef(null);
+        const bottomRef = useRef(null);
 
 
-function App() {
-  
+        return (
+          <ChatContext.Provider value={{
+            messages,
+            name,
+            text,
+            connected,
+            nameSet,
+            socketRef,
+            bottomRef,
+            dispatch
+          }}>
+            {children}
+            </ChatContext.Provider>
+        );
+      }
 
-  //stripping App down to just layout, allowing ChatProvider to hold all the state, using useContext to handle the state.
-  const {name, connected, nameSet, messages, text, dispatch, socketRef, bottomRef} = React.useContext(ChatContext)
+      function getColor(name) {
+        let hash = 0;
+        for (let c of name) hash = c.charCodeAt(0) + ((hash << 5) - hash);
+        return COLORS[Math.abs(hash) % COLORS.length];
+      }
 
-  const send = useCallback(() => {
-    const trimmed = text.trim();
-    if(!trimmed || !connected || !socketRef.current) return;
-    socketRef.current.send(JSON.stringify({
-      type: 'chat',
-      name,
-      text: trimmed,
-      timestamp: new Date().toLocaleTimeString([], {hour: '2-digit', minute: '2-digit'})
-    }));
-    dispatch({type: 'CLEAR_TEXT'});
-  }, [text, name, connected]);
+      function Avatar({ name, size = 'sm' }) {
+        const color = getColor(name);
+        const sz = size === 'sm' ? 'w-7 h-7 text-xs' : 'w-9 h-9 text-sm';
+        return (
+          <div className={`${color} ${sz} rounded-full flex items-center justify-center text-white font-600 shrink-0 select-none`}>
+            {name.charAt(0).toUpperCase()}
+          </div>
+        );
+      }
 
-  useEffect(() => {
-    function connect() {
-      const ws = new WebSocket(WS_URL);
-      socketRef.current = ws;
+      function JoinNotice({name}){
+        return (
+          <div className="flex items-center gap-3 px-2">
+            <div className="flex-1 h-px bg-zinc-800"/>
+              <span className="text-xs text-zinc-500 shrink-0">
+                {name} joined the chat
+                </span>
+              <div className="flex-1 h-px bg-zinc-800"/>
+          </div>
+        )
+      }
 
-      ws.addEventListener('open', () => dispatch({type: 'SET_CONNECTED', payload: true}));
-      ws.addEventListener('close', () => {
-        // replacing 'setConnected' with 'dispatch' calls for the 'SET_CONNECTED' state
-        dispatch({type:'SET_CONNECTED', payload: false})
-        setTimeout(connect, 2000);
-      });
-      ws.addEventListener('message', (e) => {
-        const msg = JSON.parse(e.data);
-        if(msg.type === 'chat') {
-        dispatch({type: 'ADD_MESSAGE', payload: msg});
-        } else if (msg.type === 'join') {
-        dispatch({type: 'ADD_MESSAGE', payload: {type: 'join', name: msg.name}});
-    }
-    connect();
-    return () => socketRef.current?.close();
-  }, []);
+      function Message({ msg, showAvatar }) { // removed isSelf prop
 
-  useEffect(() => {
-    bottomRef.current?.scrollIntoView({ behavior: 'smooth' });
-  }, [messages]);
+        const {name} = React.useContext(ChatContext); // grabbing 'name' directly instead of bringing it in as a prop
+        const isSelf = msg.name === name; // computing it locally
 
-  if (!nameSet) {
-    return (
-      <div className="w-full max-w-sm mx-auto flex flex-col gap-4 mt-32">
-        <div className="text-center mb-2">
-          <h1 className="text-2xl font-semibold text-zinc-100 tracking-tight">Join the chat</h1>
-          <p className="text-zinc-500 text-sm mt-1">Pick a name to get started</p>
-        </div>
-        <input
-          className="bg-zinc-800 text-zinc-100 border border-zinc-700 rounded-xl px-4 py-3 text-sm outline-none focus:border-violet-500 transition-colors placeholder:text-zinc-600"
-          placeholder="Your name..."
-          value={name}
-          // changing 'setName' to dispatch call for 'SET_NAME'
-          onChange={e => dispatch({type: 'SET_NAME', payload: e.target.value})}
-          onKeyDown={e => {
-            if (e.key === 'Enter' && name.trim()) {
-              setNameSet(true);
-              socketRef.current?.send(JSON.stringify({type:'join', name}));
+        return (
+          <div className={`msg-enter flex gap-2.5 ${isSelf ? 'flex-row-reverse' : 'flex-row'} items-end`}>
+            {showAvatar
+              ? <Avatar name={msg.name} />
+              : <div className="w-7 shrink-0" />
             }
-          }}
-          autoFocus
-        />
-        <button
-          onClick={ ()=> {
-            if(!name.trim()) return;
-            setNameSet(true);
-            socketRef.current?.send(JSON.stringify({type: 'join', name}));
-          }}
-          className="bg-violet-600 hover:bg-violet-500 active:scale-95 transition-all text-white rounded-xl px-4 py-3 text-sm font-medium"
-        >
-          Enter →
-        </button>
-      </div>
-    );
-  }
-
-  return (
-    <div className="w-full h-full flex flex-col bg-zinc-900 rounded-2xl border border-zinc-800 overflow-hidden shadow-2xl">
-
-      {/* Header */}
-      <div className="flex items-center justify-between px-5 py-4 border-b border-zinc-800">
-        <div className="flex items-center gap-3">
-          <div className="w-8 h-8 rounded-full bg-violet-600 flex items-center justify-center text-white text-xs font-medium">
-            #
+            <div className={`flex flex-col gap-0.5 max-w-[72%] ${isSelf ? 'items-end' : 'items-start'}`}>
+              {showAvatar && !isSelf && (
+                <span className="text-xs text-zinc-500 px-1">{msg.name}</span>
+              )}
+              <div className={`px-3.5 py-2.5 rounded-2xl text-sm leading-relaxed ${
+                isSelf
+                  ? 'bg-violet-600 text-white rounded-br-sm'
+                  : 'bg-zinc-800 text-zinc-100 rounded-bl-sm'
+              }`}>
+                {msg.text}
+              </div>
+              <span className="mono text-[10px] text-zinc-600 px-1">{msg.timestamp}</span>
+            </div>
           </div>
-          <div>
-            <p className="text-zinc-100 text-sm font-medium leading-none">general</p>
-            <p className="text-zinc-500 text-xs mt-0.5">
-              <StatusDot connected={connected} />
-              {connected ? 'connected' : 'reconnecting...'}
-            </p>
-          </div>
-        </div>
-        <div className="flex items-center gap-2">
-          <Avatar name={name} size="sm" />
-          <span className="text-zinc-400 text-sm">{name}</span>
-        </div>
-      </div>
+        );
+      }
 
-      {/* Messages */}
-      <div className="flex-1 overflow-y-auto messages-scroll px-4 py-5 flex flex-col gap-3">
-        {messages.length === 0 && (
-          <div className="flex-1 flex items-center justify-center">
-            <p className="text-zinc-600 text-sm">No messages yet. Say hello!</p>
-          </div>
-        )}
-        {messages.map((msg, i) => {
-          if(msg.type === 'join'){
-            return <JoinNotice key={i} name={msg.name} />
+      function StatusDot({ connected }) {
+        return (
+          <span className={`inline-block w-2 h-2 rounded-full mr-2 ${connected ? 'bg-emerald-400' : 'bg-zinc-600'}`} />
+        );
+      }
+
+
+      function App() {
+
+
+        //stripping App down to just layout, allowing ChatProvider to hold all the state, using useContext to handle the state.
+        const {name, connected, nameSet, messages, text, dispatch, socketRef, bottomRef} = React.useContext(ChatContext)
+
+        const send = useCallback(() => {
+          const trimmed = text.trim();
+          if(!trimmed || !connected || !socketRef.current) return;
+          socketRef.current.send(JSON.stringify({
+            type: 'chat',
+            name,
+            text: trimmed,
+            timestamp: new Date().toLocaleTimeString([], {hour: '2-digit', minute: '2-digit'})
+          }));
+          dispatch({type: 'CLEAR_TEXT'});
+        }, [text, name, connected]);
+
+        useEffect(() => {
+          function connect() {
+            const ws = new WebSocket(WS_URL);
+            socketRef.current = ws;
+
+            ws.addEventListener('open', () => dispatch({type: 'SET_CONNECTED', payload: true}));
+            ws.addEventListener('close', () => {
+              // replacing 'setConnected' with 'dispatch' calls for the 'SET_CONNECTED' state
+              dispatch({type:'SET_CONNECTED', payload: false})
+              setTimeout(connect, 2000);
+            });
+            ws.addEventListener('message', (e) => {
+              const msg = JSON.parse(e.data);
+              if(msg.type === 'chat') {
+              dispatch({type: 'ADD_MESSAGE', payload: msg});
+              } else if (msg.type === 'join') {
+              dispatch({type: 'ADD_MESSAGE', payload: {type: 'join', name: msg.name}});
           }
-          const prev = messages[i - 1];
-          const showAvatar = !prev || prev.name !== msg.name;
+          connect();
+          return () => socketRef.current?.close();
+        }, []);
+
+        useEffect(() => {
+          bottomRef.current?.scrollIntoView({ behavior: 'smooth' });
+        }, [messages]);
+
+        if (!nameSet) {
           return (
-            <Message
-              key={i}
-              msg={msg}
-              showAvatar={showAvatar}
-            />
+            <div className="w-full max-w-sm mx-auto flex flex-col gap-4 mt-32">
+              <div className="text-center mb-2">
+                <h1 className="text-2xl font-semibold text-zinc-100 tracking-tight">Join the chat</h1>
+                <p className="text-zinc-500 text-sm mt-1">Pick a name to get started</p>
+              </div>
+              <input
+                className="bg-zinc-800 text-zinc-100 border border-zinc-700 rounded-xl px-4 py-3 text-sm outline-none focus:border-violet-500 transition-colors placeholder:text-zinc-600"
+                placeholder="Your name..."
+                value={name}
+                // changing 'setName' to dispatch call for 'SET_NAME'
+                onChange={e => dispatch({type: 'SET_NAME', payload: e.target.value})}
+                onKeyDown={e => {
+                  if (e.key === 'Enter' && name.trim()) {
+                    dispatch({type: 'SET_NAME_CONFIRMED'});
+                    socketRef.current?.send(JSON.stringify({type:'join', name}));
+                  }
+                }}
+                autoFocus
+              />
+              <button
+                onClick={ ()=> {
+                  if(!name.trim()) return;
+                  dispatch({type:'SET_NAME_CONFIRMED'});
+                  socketRef.current?.send(JSON.stringify({type: 'join', name}));
+                }}
+                className="bg-violet-600 hover:bg-violet-500 active:scale-95 transition-all text-white rounded-xl px-4 py-3 text-sm font-medium"
+              >
+                Enter →
+              </button>
+            </div>
           );
-        })}
-        <div ref={bottomRef} />
-      </div>
+        }
 
-      {/* Input */}
-      <div className="px-4 py-4 border-t border-zinc-800">
-        <div className="flex items-center gap-2 bg-zinc-800 rounded-xl px-4 py-2.5 border border-zinc-700 focus-within:border-violet-500 transition-colors">
-          <input
-            className="flex-1 bg-transparent text-zinc-100 text-sm outline-none placeholder:text-zinc-600"
-            placeholder={`Message #general`}
-            value={text}
-            // changing 'setText' to dispatch call for 'SET_TEXT'
-            onChange={e => dispatch({ type: 'SET_TEXT', payload: e.target.value})}
-            onKeyDown={e => e.key === 'Enter' && send()}
-            disabled={!connected}
-            autoFocus
-          />
-          <button
-            onClick={send}
-            disabled={!text.trim() || !connected}
-            className="text-violet-400 hover:text-violet-300 disabled:text-zinc-700 transition-colors shrink-0"
-          >
-            <svg width="18" height="18" viewBox="0 0 24 24" fill="currentColor">
-              <path d="M2.01 21L23 12 2.01 3 2 10l15 2-15 2z"/>
-            </svg>
-          </button>
-        </div>
-        <p className="mono text-[10px] text-zinc-700 mt-2 text-center">Enter to send · ws://localhost:8080</p>
-      </div>
-    </div>
-  );
-}
+        return (
+          <div className="w-full h-full flex flex-col bg-zinc-900 rounded-2xl border border-zinc-800 overflow-hidden shadow-2xl">
 
-ReactDOM.createRoot(document.getElementById('root')).render(
-  <ChatProvider>
-    <App />
-  </ChatProvider>
-  );
-</script>
-</body>
+            {/* Header */}
+            <div className="flex items-center justify-between px-5 py-4 border-b border-zinc-800">
+              <div className="flex items-center gap-3">
+                <div className="w-8 h-8 rounded-full bg-violet-600 flex items-center justify-center text-white text-xs font-medium">
+                  #
+                </div>
+                <div>
+                  <p className="text-zinc-100 text-sm font-medium leading-none">general</p>
+                  <p className="text-zinc-500 text-xs mt-0.5">
+                    <StatusDot connected={connected} />
+                    {connected ? 'connected' : 'reconnecting...'}
+                  </p>
+                </div>
+              </div>
+              <div className="flex items-center gap-2">
+                <Avatar name={name} size="sm" />
+                <span className="text-zinc-400 text-sm">{name}</span>
+              </div>
+            </div>
+
+            {/* Messages */}
+            <div className="flex-1 overflow-y-auto messages-scroll px-4 py-5 flex flex-col gap-3">
+              {messages.length === 0 && (
+                <div className="flex-1 flex items-center justify-center">
+                  <p className="text-zinc-600 text-sm">No messages yet. Say hello!</p>
+                </div>
+              )}
+              {messages.map((msg, i) => {
+                if(msg.type === 'join'){
+                  return <JoinNotice key={i} name={msg.name} />
+                }
+                const prev = messages[i - 1];
+                const showAvatar = !prev || prev.name !== msg.name;
+                return (
+                  <Message
+                    key={i}
+                    msg={msg}
+                    showAvatar={showAvatar}
+                  />
+                );
+              })}
+              <div ref={bottomRef} />
+            </div>
+
+            {/* Input */}
+            <div className="px-4 py-4 border-t border-zinc-800">
+              <div className="flex items-center gap-2 bg-zinc-800 rounded-xl px-4 py-2.5 border border-zinc-700 focus-within:border-violet-500 transition-colors">
+                <input
+                  className="flex-1 bg-transparent text-zinc-100 text-sm outline-none placeholder:text-zinc-600"
+                  placeholder={`Message #general`}
+                  value={text}
+                  // changing 'setText' to dispatch call for 'SET_TEXT'
+                  onChange={e => dispatch({ type: 'SET_TEXT', payload: e.target.value})}
+                  onKeyDown={e => {
+                        if(e.key === 'Enter' && name.trim()){
+                          dispatch({type:'SET_NAME_CONFIRMED'});
+                          socketRef.current?.send(JSON.stringify({type: 'join', name}));
+                        }
+
+                      }}
+                  onClick={() =>{
+                    if(!name.trim()) return;
+                    dispatch({type: 'SET_NAME_CONFIRMED'});
+                    socketRef.current?.send(JSON.stringify({type: 'join', name}))
+                  }
+                  }
+                  disabled={!connected}
+                  autoFocus
+                />
+                <button
+                  onClick={send}
+                  disabled={!text.trim() || !connected}
+                  className="text-violet-400 hover:text-violet-300 disabled:text-zinc-700 transition-colors shrink-0"
+                >
+                  <svg width="18" height="18" viewBox="0 0 24 24" fill="currentColor">
+                    <path d="M2.01 21L23 12 2.01 3 2 10l15 2-15 2z"/>
+                  </svg>
+                </button>
+              </div>
+              <p className="mono text-[10px] text-zinc-700 mt-2 text-center">Enter to send · ws://localhost:8080</p>
+            </div>
+          </div>
+        );
+      }
+
+      ReactDOM.createRoot(document.getElementById('root')).render(
+        <ChatProvider>
+          <App />
+        </ChatProvider>
+        );
+    </script>
+  </body>
 </html>

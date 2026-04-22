@@ -2,6 +2,7 @@ const { WebSocketServer } = require("ws");
 
 const wss = new WebSocketServer({ port: 8080 });
 const clients = new Set();
+const rooms = new Map(); // new: stores room -> set of sockets
 
 wss.on("connection", (socket) => {
   clients.add(socket);
@@ -20,17 +21,47 @@ wss.on("connection", (socket) => {
       return; // NEW: ignore malformed messages
     }
 
+    //new switch that works for app having multiple rooms
     switch (msg.type) {
+      case "join-room":
+        //leave current room if already in one
+        if (socket.currentRoom) {
+          const prevRoom = rooms.get(socket.currentRoom);
+          if (prevRoom) prevRoom.delete(socket);
+        }
+
+        //create room if it doesn't exist
+        if (!rooms.has(msg.room)) rooms.set(msg.room, new Set());
+        // add socket to new room
+        rooms.get(msg.room).add(socket);
+        socket.currentRoom = msg.room;
+        socket.userName = msg.name;
+        //announce to everyone in the room
+        broadcastToRoom(msg.room, {
+          type: "join",
+          name: msg.name,
+          room: msg.room,
+        });
+        break;
+
       case "chat":
-        broadcast(msg);
+        if (!socket.currentRoom) return;
+        broadcastToRoom(socket.currentRoom, {
+          type: "chat",
+          name: msg.name,
+          text: msg.text,
+          timestamp: msg.timestamp,
+          room: socket.currentRoom,
+        });
         break;
-      case "typing": // NEW: only send to others, not the sender
-        broadcastToOthers(socket, msg);
-        break;
-      case "join": // NEW: announce when someone joins
-        broadcast({ type: "join", name: msg.name });
-        break;
-      default:
+
+      case "typing":
+        if (!socket.currentRoom) return;
+        broadcastToRoomExcludingSender(socket, socket.currentRoom, {
+          type: "typing",
+          name: msg.name,
+          room: socket.currentRoom,
+        });
         break;
     }
   });

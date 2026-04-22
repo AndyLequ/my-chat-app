@@ -158,6 +158,40 @@
         );
       }
 
+      const ROOMS = ["general", "random", "tech", "music"];
+
+      function RoomSelector({ currentRoom, onJoin }) {
+        return (
+          <div className="w-full max-w-sm mx-auto flex flex-col gap-4 mt-24">
+            <div className="text-center mb-2">
+              <h1 className="text-2xl font-semibold text-zinc-100 tracking-tight">
+                Pick a room
+              </h1>
+              <p className="text-zinc-500 text-sm mt-1">
+                Choose where you want to chat
+              </p>
+            </div>
+            <div className="flex flex-col gap-2">
+              {ROOMS.map((room) => (
+                <button
+                  key={room}
+                  onClick={() => onJoin(room)}
+                  className={`flex items-center gap-3 px-4 py-3 rounded-xl border text-sm font-medium transition-all
+                    ${
+                      currentRoom === room
+                        ? "bg-violet-600 border-violet-500 text-white"
+                        : "bg-zinc-800 border-zinc-700 text-zinc-300 hover:border-violet-500 hover:text-white"
+                    }`}
+                >
+                  <span className="text-zinc-400">#</span>
+                  {room}
+                </button>
+              ))}
+            </div>
+          </div>
+        );
+      }
+
       function JoinNotice({ name }) {
         return (
           <div className="flex items-center gap-3 px-2">

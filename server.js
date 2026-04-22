@@ -67,6 +67,19 @@ wss.on("connection", (socket) => {
   });
 
   socket.on("close", () => {
+    // remove from room on disconnect
+    if (socket.currentRoom) {
+      const room = rooms.get(socket.currentRoom);
+      if (room) {
+        room.delete(socket);
+        //announce they left
+        broadcastToRoom(socket.currentRoom, {
+          type: "leave",
+          name: socket.userName,
+          room: socket.currentRoom,
+        });
+      }
+    }
     clients.delete(socket);
     console.log("Client left. Total:", clients.size);
   });

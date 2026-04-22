@@ -85,21 +85,41 @@ wss.on("connection", (socket) => {
   });
 });
 
-function broadcast(message) {
-  for (const client of clients) {
+function broadcastToRoom(roomName, msg) {
+  const room = rooms.get(roomName);
+  if (!room) return;
+  for (const client of room) {
     if (client.readyState === client.OPEN) {
-      client.send(JSON.stringify(message));
+      client.send(JSON.stringify(msg));
     }
   }
 }
 
-function broadcastToOthers(sender, message) {
-  for (const client of clients) {
+function broadcastToRoomExcludingSender(sender, roomName, msg) {
+  const room = rooms.get(roomName);
+  if (!room) return;
+  for (const client of room) {
     if (client !== sender && client.readyState === client.OPEN) {
-      client.send(JSON.stringify(message));
+      client.send(JSON.stringify(msg));
     }
   }
 }
+
+// function broadcast(message) {
+//   for (const client of clients) {
+//     if (client.readyState === client.OPEN) {
+//       client.send(JSON.stringify(message));
+//     }
+//   }
+// }
+
+// function broadcastToOthers(sender, message) {
+//   for (const client of clients) {
+//     if (client !== sender && client.readyState === client.OPEN) {
+//       client.send(JSON.stringify(message));
+//     }
+//   }
+// }
 
 setInterval(() => {
   for (const socket of wss.clients) {

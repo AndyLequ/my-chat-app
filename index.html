@@ -335,9 +335,6 @@
                 onKeyDown={(e) => {
                   if (e.key === "Enter" && name.trim()) {
                     dispatch({ type: "SET_NAME_CONFIRMED" });
-                    socketRef.current?.send(
-                      JSON.stringify({ type: "join", name }),
-                    );
                   }
                 }}
                 autoFocus
@@ -346,18 +343,28 @@
                 onClick={() => {
                   if (!name.trim()) return;
                   dispatch({ type: "SET_NAME_CONFIRMED" });
-                  socketRef.current?.send(
-                    JSON.stringify({ type: "join", name }),
-                  );
                 }}
                 className="bg-violet-600 hover:bg-violet-500 active:scale-95 transition-all text-white rounded-xl px-4 py-3 text-sm font-medium"
               >
-                Enter →
+                Next →
               </button>
             </div>
           );
         }
 
+        if (!currentRoom) {
+          return (
+            <RoomSelector
+              currentRoom={currentRoom}
+              onJoin={(room) => {
+                dispatch({ type: "SET_ROOM", payload: room });
+                socketRef.current?.send(
+                  JSON.stringify({ type: "join-room", room, name }),
+                );
+              }}
+            />
+          );
+        }
         return (
           <div className="w-full h-full flex flex-col bg-zinc-900 rounded-2xl border border-zinc-800 overflow-hidden shadow-2xl">
             {/* Header */}

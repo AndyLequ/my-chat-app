@@ -270,6 +270,7 @@
           socketRef.current.send(
             JSON.stringify({
               type: "chat",
+              room: currentRoom, // added for the new multiple rooms logic
               name,
               text: trimmed,
               timestamp: new Date().toLocaleTimeString([], {
@@ -365,6 +366,7 @@
             />
           );
         }
+
         return (
           <div className="w-full h-full flex flex-col bg-zinc-900 rounded-2xl border border-zinc-800 overflow-hidden shadow-2xl">
             {/* Header */}

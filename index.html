@@ -118,7 +118,7 @@
 
       function ChatProvider({ children }) {
         const [state, dispatch] = useReducer(reducer, initialState);
-        const { messages, name, text, connected, nameSet } = state;
+        const { messages, name, text, connected, nameSet, currentRoom } = state;
         const socketRef = useRef(null);
         const bottomRef = useRef(null);
 
@@ -130,6 +130,7 @@
               text,
               connected,
               nameSet,
+              currentRoom,
               socketRef,
               bottomRef,
               dispatch,

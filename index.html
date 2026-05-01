@@ -407,7 +407,7 @@
                 }
                 const prev = messages[i - 1];
                 const showAvatar = !prev || prev.name !== msg.name;
-                return <Message key={i} msg={msg} showAvatar={showAvatar} />;
+                return <Message key={msg.id} msg={msg} showAvatar={showAvatar} />;
               })}
               <div ref={bottomRef} />
             </div>

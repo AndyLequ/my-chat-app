@@ -205,7 +205,7 @@
         );
       }
 
-      function Message({ msg, showAvatar }) {
+      const Message = React.Memo(function Message({ msg, showAvatar }) {
         // removed isSelf prop
 
         const { name } = React.useContext(ChatContext); // grabbing 'name' directly instead of bringing it in as a prop
@@ -242,7 +242,7 @@
           </div>
         );
       }
-
+    )
       function StatusDot({ connected }) {
         return (
           <span

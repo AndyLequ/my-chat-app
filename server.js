@@ -48,6 +48,7 @@ wss.on("connection", (socket) => {
         if (!socket.currentRoom) return;
         broadcastToRoom(socket.currentRoom, {
           type: "chat",
+          id: `${Date.now()}-${Math.random().toString(36).slice(2)}`, 
           name: msg.name,
           text: msg.text,
           timestamp: msg.timestamp,

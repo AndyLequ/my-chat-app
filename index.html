@@ -304,7 +304,9 @@
                   type: "ADD_MESSAGE",
                   payload: { type: "join", name: msg.name },
                 });
-              }
+              } else if (msg.type === "leave") {   
+    dispatch({ type: "ADD_MESSAGE", payload: { type: "leave", name: msg.name } });
+  }
             });
           }
           connect();

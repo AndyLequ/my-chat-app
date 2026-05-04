@@ -379,6 +379,7 @@
             <RoomSelector
               currentRoom={currentRoom}
               onJoin={(room) => {
+                dispatch({ type: "CLEAR_MESSAGES" });
                 dispatch({ type: "SET_ROOM", payload: room });
                 socketRef.current?.send(
                   JSON.stringify({ type: "join-room", room, name }),

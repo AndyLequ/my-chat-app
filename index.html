@@ -205,6 +205,18 @@
         );
       }
 
+      function LeaveNotice({ name }) {
+        return (
+          <div className="flex items-center gap-3 px-2">
+            <div className="flex-1 h-px bg-zinc-800" />
+            <span className="text-xs text-zinc-600 shrink-0">
+              {name} left the chat
+            </span>
+            <div className="flex-1 h-px bg-zinc-800" />
+          </div>
+        );
+      }
+
       const Message = React.Memo(function Message({ msg, showAvatar }) {
         // removed isSelf prop
 

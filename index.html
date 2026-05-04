@@ -219,7 +219,7 @@
         );
       }
 
-      const Message = React.Memo(function Message({ msg, showAvatar }) {
+      const Message = React.memo(function Message({ msg, showAvatar }) {
         // removed isSelf prop
 
         const { name } = React.useContext(ChatContext); // grabbing 'name' directly instead of bringing it in as a prop
@@ -424,13 +424,17 @@
                 if (msg.type === "join") {
                   return <JoinNotice key={msg.id || i} name={msg.name} />;
                 }
-                const prev = messages[i - 1];
-                const showAvatar = !prev || prev.name !== msg.name;
                 if (msg.type === "leave") {
                   return <LeaveNotice key={msg.id || i} name={msg.name} />;
                 }
+                const prev = messages[i - 1];
+                const showAvatar = !prev || prev.name !== msg.name;
                 return (
-                  <Message key={msg.id} msg={msg} showAvatar={showAvatar} />
+                  <Message
+                    key={msg.id || i}
+                    msg={msg}
+                    showAvatar={showAvatar}
+                  />
                 );
               })}
               <div ref={bottomRef} />

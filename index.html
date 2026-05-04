@@ -205,7 +205,7 @@
         );
       }
 
-      const Message = React.Memo(function Message({ msg, showAvatar }) {
+      const Message = React.memo(function Message({ msg, showAvatar }) {
         // removed isSelf prop
 
         const { name } = React.useContext(ChatContext); // grabbing 'name' directly instead of bringing it in as a prop
@@ -241,8 +241,7 @@
             </div>
           </div>
         );
-      }
-    )
+      });
       function StatusDot({ connected }) {
         return (
           <span
@@ -304,9 +303,12 @@
                   type: "ADD_MESSAGE",
                   payload: { type: "join", name: msg.name },
                 });
-              } else if (msg.type === "leave") {   
-    dispatch({ type: "ADD_MESSAGE", payload: { type: "leave", name: msg.name } });
-  }
+              } else if (msg.type === "leave") {
+                dispatch({
+                  type: "ADD_MESSAGE",
+                  payload: { type: "leave", name: msg.name },
+                });
+              }
             });
           }
           connect();
@@ -409,7 +411,9 @@
                 }
                 const prev = messages[i - 1];
                 const showAvatar = !prev || prev.name !== msg.name;
-                return <Message key={msg.id} msg={msg} showAvatar={showAvatar} />;
+                return (
+                  <Message key={msg.id} msg={msg} showAvatar={showAvatar} />
+                );
               })}
               <div ref={bottomRef} />
             </div>

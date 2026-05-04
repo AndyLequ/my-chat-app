@@ -419,10 +419,13 @@
               )}
               {messages.map((msg, i) => {
                 if (msg.type === "join") {
-                  return <JoinNotice key={i} name={msg.name} />;
+                  return <JoinNotice key={msg.id || i} name={msg.name} />;
                 }
                 const prev = messages[i - 1];
                 const showAvatar = !prev || prev.name !== msg.name;
+                if (msg.type === "leave") {
+                  return <LeaveNotice key={msg.id || i} name={msg.name} />;
+                }
                 return (
                   <Message key={msg.id} msg={msg} showAvatar={showAvatar} />
                 );

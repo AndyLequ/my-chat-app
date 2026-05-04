@@ -109,6 +109,9 @@
             return { ...state, text: "" };
           case "SET_ROOM":
             return { ...state, currentRoom: action.payload };
+          case "CLEAR_MESSAGES":
+            return { ...state, messages: [] };
+
           default:
             return state;
         }

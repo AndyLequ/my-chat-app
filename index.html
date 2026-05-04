@@ -109,6 +109,9 @@
             return { ...state, text: "" };
           case "SET_ROOM":
             return { ...state, currentRoom: action.payload };
+          case "CLEAR_MESSAGES":
+            return { ...state, messages: [] };
+
           default:
             return state;
         }
@@ -205,6 +208,19 @@
         );
       }
 
+      function LeaveNotice({ name }) {
+        return (
+          <div className="flex items-center gap-3 px-2">
+            <div className="flex-1 h-px bg-zinc-800">
+              <span className="text-xs text-zinc-600 shrink-0">
+                {name} left the chat
+              </span>
+              <div className="flex-1 h-px bg-zinc-800" />
+            </div>
+          </div>
+        );
+      }
+
       const Message = React.Memo(function Message({ msg, showAvatar }) {
         // removed isSelf prop
 
@@ -241,8 +257,7 @@
             </div>
           </div>
         );
-      }
-    )
+      });
       function StatusDot({ connected }) {
         return (
           <span
@@ -304,9 +319,12 @@
                   type: "ADD_MESSAGE",
                   payload: { type: "join", name: msg.name },
                 });
-              } else if (msg.type === "leave") {   
-    dispatch({ type: "ADD_MESSAGE", payload: { type: "leave", name: msg.name } });
-  }
+              } else if (msg.type === "leave") {
+                dispatch({
+                  type: "ADD_MESSAGE",
+                  payload: { type: "leave", name: msg.name },
+                });
+              }
             });
           }
           connect();
@@ -361,6 +379,7 @@
             <RoomSelector
               currentRoom={currentRoom}
               onJoin={(room) => {
+                dispatch({ type: "CLEAR_MESSAGES" });
                 dispatch({ type: "SET_ROOM", payload: room });
                 socketRef.current?.send(
                   JSON.stringify({ type: "join-room", room, name }),
@@ -405,11 +424,13 @@
               )}
               {messages.map((msg, i) => {
                 if (msg.type === "join") {
-                  return <JoinNotice key={i} name={msg.name} />;
+                  return <JoinNotice key={msg.id || i} name={msg.name} />;
                 }
                 const prev = messages[i - 1];
                 const showAvatar = !prev || prev.name !== msg.name;
-                return <Message key={msg.id} msg={msg} showAvatar={showAvatar} />;
+                if (msg.type === "leave") {
+                  return <LeaveNotice key={msg.id || i} name={msg.name} />;
+                }
               })}
               <div ref={bottomRef} />
             </div>

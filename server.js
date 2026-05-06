@@ -48,7 +48,7 @@ wss.on("connection", (socket) => {
         if (!socket.currentRoom) return;
         broadcastToRoom(socket.currentRoom, {
           type: "chat",
-          id: `${Date.now()}-${Math.random().toString(36).slice(2)}`, 
+          id: `${Date.now()}-${Math.random().toString(36).slice(2)}`,
           name: msg.name,
           text: msg.text,
           timestamp: msg.timestamp,
@@ -63,6 +63,21 @@ wss.on("connection", (socket) => {
           name: msg.name,
           room: socket.currentRoom,
         });
+        break;
+
+      case "leave-room":
+        if (socket.currentRoom) {
+          const room = rooms.get(socket.currentRoom);
+          if (room) {
+            room.delete(socket);
+            broadcastToRoom(socket.currentRoom, {
+              type: "leave",
+              name: msg.name,
+              room: socket.currentRoom,
+            });
+          }
+          socket.currentRoom = null;
+        }
         break;
     }
   });

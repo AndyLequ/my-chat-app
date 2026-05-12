@@ -272,7 +272,15 @@
         function switchRoom(room) {
           if (room === currentRoom) return;
           if (currentRoom) {
+            socketRef.current?.send(
+              JSON.stringify({ type: "leave-room", name, room: currentRoom }),
+            );
           }
+          dispatch({ type: "CLEAR_MESSAGES" });
+          dispatch({ type: "SET_ROOM", payload: room });
+          socketRef.current?.send(
+            JSON.stringify({ type: "join-room", room, name }),
+          );
         }
       }
 

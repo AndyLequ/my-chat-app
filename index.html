@@ -264,6 +264,18 @@
         );
       }
 
+      // Left Sidebar
+      function Sidebar() {
+        const { currentRoom, name, dispatch, socketRef, connected } =
+          React.useContext(ChatContext);
+
+        function switchRoom(room) {
+          if (room === currentRoom) return;
+          if (currentRoom) {
+          }
+        }
+      }
+
       function App() {
         //stripping App down to just layout, allowing ChatProvider to hold all the state, using useContext to handle the state.
         const {
@@ -444,17 +456,12 @@
                   return <LeaveNotice key={msg.id || i} name={msg.name} />;
                 }
 
-                //new code
                 const prev = messages
                   .slice(0, i)
                   .reverse()
                   .find((m) => m.type === "chat");
                 const showAvatar = !prev || prev.name !== msg.name;
 
-                //old buggy code
-                // const prev = messages[i - 1];
-                // const showAvatar = !prev || prev.name !== msg.name;
-                // //
                 return (
                   <Message
                     key={msg.id || i}

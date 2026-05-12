@@ -282,6 +282,106 @@
             JSON.stringify({ type: "join-room", room, name }),
           );
         }
+
+        return (
+          <div className="w-52 shrink-0 h-full flex flex-col bg-zinc-950 border-r border-zinc-800/60">
+            {/* App title */}
+            <div className="px-4 py-4 border-b border-zinc-800/60">
+              <div className="flex items-center gap-2">
+                <div className="w-6 h-6 rounded-md bg-violet-600 flex items-center justify-center text-white text-xs font-bold">
+                  #
+                </div>
+                <span className="text-zinc-100 text-sm font-semibold tracking-tight">
+                  chatapp
+                </span>
+              </div>
+            </div>
+
+            {/* Rooms list */}
+            <div className="flex-1 overflow-y-auto px-2 py-3">
+              <p className="text-zinc-600 text-[10px] font-semibold uppercase tracking-widest px-2 mb-2">
+                Rooms
+              </p>
+              <div className="flex flex-col gap-0.5">
+                {ROOMS.map((room) => (
+                  <button
+                    key={room}
+                    onClick={() => switchRoom(room)}
+                    className={`room-btn flex items-center gap-2.5 px-2.5 py-2 rounded-lg text-sm text-left w-full
+                      ${
+                        currentRoom === room
+                          ? "bg-violet-600/20 text-violet-300 font-medium"
+                          : "text-zinc-400 hover:bg-zinc-800/60 hover:text-zinc-200"
+                      }`}
+                  >
+                    <span
+                      className={`text-xs ${currentRoom === room ? "text-violet-400" : "text-zinc-600"}`}
+                    >
+                      #
+                    </span>
+                    {room}
+                    {currentRoom === room && (
+                      <span className="ml-auto w-1.5 h-1.5 rounded-full bg-violet-400" />
+                    )}
+                  </button>
+                ))}
+              </div>
+            </div>
+
+            {/* Current user footer */}
+            {name && (
+              <div className="px-3 py-3 border-t border-zinc-800/60 flex items-center gap-2.5">
+                <Avatar name={name} size="sm" />
+                <div className="flex-1 min-w-0">
+                  <p className="text-zinc-200 text-xs font-medium truncate">
+                    {name}
+                  </p>
+                  <p className="text-zinc-600 text-[10px] flex items-center gap-1">
+                    <StatusDot connected={connected} />
+                    {connected ? "online" : "offline"}
+                  </p>
+                </div>
+              </div>
+            )}
+          </div>
+        );
+      }
+
+      // Members Panel
+      function MembersPanel({ members }) {
+        return (
+          <div className="w-44 shrink-0 h-full flex flex-col bg-zinc-950 border-l border-zinc-800/60">
+            <div className="px-4 py-4 border-b border-zinc-800/60">
+              <p className="text-zinc-400 text-xs font-semibold uppercase tracking-widest">
+                Members
+              </p>
+            </div>
+            <div className="flex-1 overflow-y-auto px-2 py-3">
+              {members.length === 0 ? (
+                <p className="text-zinc-700 text-xs text-center mt-4">
+                  No one here yet
+                </p>
+              ) : (
+                <div className="flex flex-col gap-1">
+                  {members.map((member) => (
+                    <div
+                      key={member}
+                      className="flex items-center gap-2.5 px-2 py-1.5 rounded-lg hover:bg-zinc-800/40 transition-colors"
+                    >
+                      <div className="relative">
+                        <Avatar name={member} size="sm" />
+                        <span className="absolute -bottom-0.5 -right-0.5 w-2.5 h-2.5 rounded-full bg-emerald-400 border-2 border-zinc-950" />
+                      </div>
+                      <span className="text-zinc-300 text-xs truncate">
+                        {member}
+                      </span>
+                    </div>
+                  ))}
+                </div>
+              )}
+            </div>
+          </div>
+        );
       }
 
       function App() {

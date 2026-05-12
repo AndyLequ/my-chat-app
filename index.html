@@ -384,6 +384,39 @@
         );
       }
 
+      // Main Chat Area
+      function ChatArea({ members }) {
+        const {
+          name,
+          connected,
+          messages,
+          text,
+          dispatch,
+          socketRef,
+          bottomRef,
+          currentRoom,
+        } = React.useContext(ChatContext);
+
+        const send = useCallback(() => {
+          const trimmed = text.trim();
+          if (!trimmed || !connected || !socketRef.current || !currentRoom)
+            return;
+          socketRef.current.send(
+            JSON.stringify({
+              type: "chat",
+              room: currentRoom,
+              name,
+              text: trimmed,
+              timestamp: new Date().toLocaleTimeString([], {
+                hour: "2-digit",
+                minute: "2-digit",
+              }),
+            }),
+          );
+          dispatch({ type: "CLEAR_TEXT" });
+        }, [text, name, connected, currentRoom]);
+      }
+
       function App() {
         //stripping App down to just layout, allowing ChatProvider to hold all the state, using useContext to handle the state.
         const {

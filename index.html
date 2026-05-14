@@ -264,6 +264,273 @@
         );
       }
 
+      // Left Sidebar
+      function Sidebar() {
+        const { currentRoom, name, dispatch, socketRef, connected } =
+          React.useContext(ChatContext);
+
+        function switchRoom(room) {
+          if (room === currentRoom) return;
+          if (currentRoom) {
+            socketRef.current?.send(
+              JSON.stringify({ type: "leave-room", name, room: currentRoom }),
+            );
+          }
+          dispatch({ type: "CLEAR_MESSAGES" });
+          dispatch({ type: "SET_ROOM", payload: room });
+          socketRef.current?.send(
+            JSON.stringify({ type: "join-room", room, name }),
+          );
+        }
+
+        return (
+          <div className="w-52 shrink-0 h-full flex flex-col bg-zinc-950 border-r border-zinc-800/60">
+            {/* App title */}
+            <div className="px-4 py-4 border-b border-zinc-800/60">
+              <div className="flex items-center gap-2">
+                <div className="w-6 h-6 rounded-md bg-violet-600 flex items-center justify-center text-white text-xs font-bold">
+                  #
+                </div>
+                <span className="text-zinc-100 text-sm font-semibold tracking-tight">
+                  chatapp
+                </span>
+              </div>
+            </div>
+
+            {/* Rooms list */}
+            <div className="flex-1 overflow-y-auto px-2 py-3">
+              <p className="text-zinc-600 text-[10px] font-semibold uppercase tracking-widest px-2 mb-2">
+                Rooms
+              </p>
+              <div className="flex flex-col gap-0.5">
+                {ROOMS.map((room) => (
+                  <button
+                    key={room}
+                    onClick={() => switchRoom(room)}
+                    className={`room-btn flex items-center gap-2.5 px-2.5 py-2 rounded-lg text-sm text-left w-full
+                      ${
+                        currentRoom === room
+                          ? "bg-violet-600/20 text-violet-300 font-medium"
+                          : "text-zinc-400 hover:bg-zinc-800/60 hover:text-zinc-200"
+                      }`}
+                  >
+                    <span
+                      className={`text-xs ${currentRoom === room ? "text-violet-400" : "text-zinc-600"}`}
+                    >
+                      #
+                    </span>
+                    {room}
+                    {currentRoom === room && (
+                      <span className="ml-auto w-1.5 h-1.5 rounded-full bg-violet-400" />
+                    )}
+                  </button>
+                ))}
+              </div>
+            </div>
+
+            {/* Current user footer */}
+            {name && (
+              <div className="px-3 py-3 border-t border-zinc-800/60 flex items-center gap-2.5">
+                <Avatar name={name} size="sm" />
+                <div className="flex-1 min-w-0">
+                  <p className="text-zinc-200 text-xs font-medium truncate">
+                    {name}
+                  </p>
+                  <p className="text-zinc-600 text-[10px] flex items-center gap-1">
+                    <StatusDot connected={connected} />
+                    {connected ? "online" : "offline"}
+                  </p>
+                </div>
+              </div>
+            )}
+          </div>
+        );
+      }
+
+      // Members Panel
+      function MembersPanel({ members }) {
+        return (
+          <div className="w-44 shrink-0 h-full flex flex-col bg-zinc-950 border-l border-zinc-800/60">
+            <div className="px-4 py-4 border-b border-zinc-800/60">
+              <p className="text-zinc-400 text-xs font-semibold uppercase tracking-widest">
+                Members
+              </p>
+            </div>
+            <div className="flex-1 overflow-y-auto px-2 py-3">
+              {members.length === 0 ? (
+                <p className="text-zinc-700 text-xs text-center mt-4">
+                  No one here yet
+                </p>
+              ) : (
+                <div className="flex flex-col gap-1">
+                  {members.map((member) => (
+                    <div
+                      key={member}
+                      className="flex items-center gap-2.5 px-2 py-1.5 rounded-lg hover:bg-zinc-800/40 transition-colors"
+                    >
+                      <div className="relative">
+                        <Avatar name={member} size="sm" />
+                        <span className="absolute -bottom-0.5 -right-0.5 w-2.5 h-2.5 rounded-full bg-emerald-400 border-2 border-zinc-950" />
+                      </div>
+                      <span className="text-zinc-300 text-xs truncate">
+                        {member}
+                      </span>
+                    </div>
+                  ))}
+                </div>
+              )}
+            </div>
+          </div>
+        );
+      }
+
+      // Main Chat Area
+      function ChatArea({ members }) {
+        const {
+          name,
+          connected,
+          messages,
+          text,
+          dispatch,
+          socketRef,
+          bottomRef,
+          currentRoom,
+        } = React.useContext(ChatContext);
+
+        const send = useCallback(() => {
+          const trimmed = text.trim();
+          if (!trimmed || !connected || !socketRef.current || !currentRoom)
+            return;
+          socketRef.current.send(
+            JSON.stringify({
+              type: "chat",
+              room: currentRoom,
+              name,
+              text: trimmed,
+              timestamp: new Date().toLocaleTimeString([], {
+                hour: "2-digit",
+                minute: "2-digit",
+              }),
+            }),
+          );
+          dispatch({ type: "CLEAR_TEXT" });
+        }, [text, name, connected, currentRoom]);
+
+        useEffect(() => {
+          bottomRef.current?.scrollIntoView({ behavior: "smooth" });
+        }, [messages]);
+
+        if (!currentRoom) {
+          return (
+            <div className="flex-1 flex items-center justify-center bg-zinc-900">
+              <div className="text-center">
+                <div className="w-12 h-12 rounded-2xl bg-zinc-800 flex items-center justify-center text-zinc-500 text-xl mx-auto mb-3">
+                  #
+                </div>
+                <p className="text-zinc-400 text-sm font-medium">
+                  Pick a room to start chatting
+                </p>
+                <p className="text-zinc-600 text-xs mt-1">
+                  Select a room from the sidebar
+                </p>
+              </div>
+            </div>
+          );
+        }
+
+        return (
+          <div className="flex-1 flex flex-col min-w-0 bg-zinc-900">
+            {/* Chat header */}
+            <div className="flex items-center justify-between px-5 py-3.5 border-b border-zinc-800/60">
+              <div className="flex items-center gap-2.5">
+                <div className="w-7 h-7 rounded-lg bg-violet-600/20 flex items-center justify-center text-violet-400 text-xs font-bold">
+                  #
+                </div>
+                <div>
+                  <p className="text-zinc-100 text-sm font-medium leading-none">
+                    {currentRoom}
+                  </p>
+                  <p className="text-zinc-500 text-[10px] mt-0.5">
+                    {members.length} member{members.length !== 1 ? "s" : ""}
+                  </p>
+                </div>
+              </div>
+              <div className="flex items-center gap-1.5">
+                <StatusDot connected={connected} />
+                <span className="text-zinc-600 text-xs">
+                  {connected ? "connected" : "reconnecting..."}
+                </span>
+              </div>
+            </div>
+
+            {/* Messages */}
+            <div className="flex-1 overflow-y-auto messages-scroll px-4 py-4 flex flex-col gap-3">
+              {messages.length === 0 ? (
+                <div className="flex-1 flex items-center justify-center">
+                  <p className="text-zinc-600 text-sm">
+                    No messages yet. Say hello!
+                  </p>
+                </div>
+              ) : (
+                messages.map((msg, i) => {
+                  if (msg.type === "join")
+                    return <JoinNotice key={msg.id || i} name={msg.name} />;
+                  if (msg.type === "leave")
+                    return <LeaveNotice key={msg.id || i} name={msg.name} />;
+                  const prev = messages
+                    .slice(0, i)
+                    .reverse()
+                    .find((m) => m.type === "chat");
+                  const showAvatar = !prev || prev.name !== msg.name;
+                  return (
+                    <Message
+                      key={msg.id || i}
+                      msg={msg}
+                      showAvatar={showAvatar}
+                    />
+                  );
+                })
+              )}
+              <div ref={bottomRef} />
+            </div>
+
+            {/* Input */}
+            <div className="px-4 py-3 border-t border-zinc-800/60">
+              <div className="flex items-center gap-2 bg-zinc-800 rounded-xl px-4 py-2.5 border border-zinc-700/60 focus-within:border-violet-500/60 transition-colors">
+                <input
+                  className="flex-1 bg-transparent text-zinc-100 text-sm outline-none placeholder:text-zinc-600"
+                  placeholder={`Message #${currentRoom}`}
+                  value={text}
+                  onChange={(e) =>
+                    dispatch({ type: "SET_TEXT", payload: e.target.value })
+                  }
+                  onKeyDown={(e) => e.key === "Enter" && send()}
+                  disabled={!connected}
+                  autoFocus
+                />
+                <button
+                  onClick={send}
+                  disabled={!text.trim() || !connected}
+                  className="text-violet-400 hover:text-violet-300 disabled:text-zinc-700 transition-colors shrink-0"
+                >
+                  <svg
+                    width="18"
+                    height="18"
+                    viewBox="0 0 24 24"
+                    fill="currentColor"
+                  >
+                    <path d="M2.01 21L23 12 2.01 3 2 10l15 2-15 2z" />
+                  </svg>
+                </button>
+              </div>
+              <p className="mono text-[10px] text-zinc-700 mt-1.5 text-center">
+                Enter to send · ws://localhost:8080
+              </p>
+            </div>
+          </div>
+        );
+      }
+
       function App() {
         //stripping App down to just layout, allowing ChatProvider to hold all the state, using useContext to handle the state.
         const {
@@ -444,17 +711,12 @@
                   return <LeaveNotice key={msg.id || i} name={msg.name} />;
                 }
 
-                //new code
                 const prev = messages
                   .slice(0, i)
                   .reverse()
                   .find((m) => m.type === "chat");
                 const showAvatar = !prev || prev.name !== msg.name;
 
-                //old buggy code
-                // const prev = messages[i - 1];
-                // const showAvatar = !prev || prev.name !== msg.name;
-                // //
                 return (
                   <Message
                     key={msg.id || i}

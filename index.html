@@ -586,6 +586,17 @@
           currentRoom,
         } = React.useContext(ChatContext);
 
+        // track members from join/leave events
+        useEffect(() => {
+          const names = new Set();
+          messages.forEach((m) => {
+            if (m.type === "join") names.add(m.name);
+            if (m.type === "leave") names.delete(m.name);
+          });
+          if (currentRoom && name) names.add(name);
+          setMembers([...names]);
+        }, [messages, currentRoom, name]);
+
         const send = useCallback(() => {
           const trimmed = text.trim();
           if (!trimmed || !connected || !socketRef.current) return;
